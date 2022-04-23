@@ -1,0 +1,129 @@
+#!/usr/bin/env python3
+import serial
+import matplotlib.pyplot as plt
+import numpy as np
+import time
+
+arduino_port = "/dev/cu.usbserial-1140"
+baud = 115200;
+samples = 4000 #how many samples to collect
+print_labels = False
+line = 0 #start at 0 because our header is 0 (not real data)
+
+ser = serial.Serial(arduino_port, baud)
+print ("Connected to Arduino port: " + arduino_port) 
+print("Created file")
+
+channels_str = str(ser.readline())[0:][2:-5]
+
+print(channels_str)
+
+channels = int(channels_str)
+
+num_points = int(input('There are '+ channels_str + ' for the spectrometer, how many do you want to plot? '))
+
+line = 0
+spec_data = np.zeros([samples, num_points])
+
+points = np.linspace(340, 850, num=channels)
+
+scatter_points = np.linspace(0, len(points)-1, num = num_points).astype(int)
+
+print('Here are the wavelengths that will be shown:')
+
+points_str = ''
+
+scatter_points_spec = []
+
+for i in scatter_points:
+	scatter_points_spec.append(points[i])
+	
+print(scatter_points_spec)
+
+time.sleep(3)
+
+plt.plot(scatter_points_spec, spec_data[0,:])
+
+t = 0
+
+color = 'Violet'    
+
+color_array = ['Violet', 'Blue', 'Cyan', 'Green', 'Yellow', 'Orange', 'Red']
+
+color_num = 0
+
+def nextColor(color_num):
+	color_num = color_num + 1
+	if color_num > 6:
+		color_num = 0
+	return color_num
+
+plt.title(color)
+
+change_array = list(range(1, channels+1))
+
+# initial_time = timer.perf_counter()
+
+while line < samples:
+	getData=str(ser.readline())
+	spec_line_str = getData[0:][2:-4]
+	spec_line_data = []
+	
+	data_dummy = '0'
+	
+#	for i in spec_line_str:
+#		if i == ',':
+#			spec_line_data.append(int(data_dummy))
+#			data_dummy = ''
+#		else:
+#			if i == '':
+#				i = '0'
+#			data_dummy = data_dummy + i
+	
+	spec_line_str_list = spec_line_str.split(',')
+	
+	for i in spec_line_str_list:
+		if i == '':
+			i = '0'
+		spec_line_data.append(int(i))
+	
+#	spec_line_data.append(int(data_dummy))
+	
+	if len(spec_line_data) < channels:
+		for i in range(channels - len(spec_line_data)):
+			spec_line_data.append(0) 
+			
+	if len(spec_line_data) > channels:
+		spec_line_data = spec_line_data[0:channels]
+	
+	if spec_line_data == change_array:
+		color_num = nextColor(color_num)
+		color = color_array[color_num]
+		plt.title(color)
+		
+	
+	scatter_line_data = []
+	
+	for i in scatter_points:
+		scatter_line_data.append(spec_line_data[i])
+		
+	
+	spec_data[line,:] = scatter_line_data
+	
+	plt.gca().lines[0].set_ydata(scatter_line_data)
+	plt.gca().relim() 
+	plt.gca().autoscale_view()
+	plt.pause(0.05);
+	
+	line = line + 1
+	
+	if (line % 50) == 0:
+		print(line)
+	
+	
+filename = 'data_scatter_' + str(num_points) + '.csv'
+
+np.savetxt(filename, spec_data, delimiter=',')
+	
+	
+print("Data collection complete!")
