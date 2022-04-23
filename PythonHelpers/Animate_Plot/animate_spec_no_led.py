@@ -34,51 +34,31 @@ excel_title = 'Book{}'.format(book_choice)
 df2 = pd.read_excel('{}.xlsx'.format(excel_title))
 num_frames = len(df2.index) - 1
 
-index_nums = list(range(1,293))
+index_nums = list(range(1,292))
 index = [num_hash(n) for n in index_nums ]
 df2.set_axis(index, axis=1, inplace=True)
 df2.head(20)
 
 wavelengths = np.linspace(340, 850, 289)
 
-time = np.array(df2.loc[:,'A']).reshape(-1,1)
-left_temp = np.array(df2.loc[:,'B']).reshape(-1,1)
-right_temp = np.array(df2.loc[:,'C']).reshape(-1,1)
+time = np.array(df2.loc[:,'KE']).reshape(-1,1)
 
-spec_data = np.array(df2.loc[:, 'D':])
+spec_data = np.array(df2.loc[:, :'KC'])
 
-fig, (spec_plot, temp_plot) = plt.subplots(1,2)
+fig, ax = plt.subplots()
 
-spec_plot.plot(wavelengths, spec_data[0,:]) 
-spec_plot.set_title('Spectrometer Data')
-spec_plot.set_xlabel('Wavelengths [nm]')
-spec_plot.set_ylabel('Intensity')
-spec_plot.axis([340, 850, 0, 1050])
-
-temp_plot.plot(time[0], left_temp[0], time[0], right_temp[0])
-temp_plot.set_title('Temperature Readings')
-temp_plot.set_xlabel('Time [s]')
-temp_plot.set_ylabel('Temperature [ºC]')
-temp_plot.legend(['Window Sensor', 'Spectrometer Sensor'])
-temp_plot.axis([None, None, 0, 400])
-
-plt.tight_layout()
-
+ax.plot(wavelengths, spec_data[0,:]) 
+ax.set_title('Spectrometer Data')
+ax.set_xlabel('Wavelengths [nm]')
+ax.set_ylabel('Intensity')
 
 def animate(i):
-    spec_plot.lines[0].set_ydata(spec_data[i+1,:])
-    spec_plot.relim() 
-    spec_plot.autoscale_view()
-    
-    temp_plot.lines[0].set_ydata(left_temp[0:i+1])
-    temp_plot.lines[0].set_xdata(time[0:i+1])
-    temp_plot.lines[1].set_ydata(right_temp[0:i+1])
-    temp_plot.lines[1].set_xdata(time[0:i+1])
-    temp_plot.relim() 
-    temp_plot.autoscale_view()
+    plt.gca().lines[0].set_ydata(spec_data[i+1,:]) # Update the plot
+    plt.gca().relim() 
+    plt.gca().autoscale_view()
 
 ani = animation.FuncAnimation(fig, animate, frames=num_frames, interval=40)
 #plt.show()
 
-ani.save('spec_plot_{}.mp4'.format(excel_title), fps=40, dpi=200)
+ani.save('spec_plot_{}.mp4'.format(excel_title), fps=24, dpi=200)
     

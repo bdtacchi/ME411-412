@@ -34,39 +34,51 @@ excel_title = 'Book{}'.format(book_choice)
 df2 = pd.read_excel('{}.xlsx'.format(excel_title))
 num_frames = len(df2.index) - 1
 
-index_nums = list(range(1,293))
+index_nums = list(range(1,588))
 index = [num_hash(n) for n in index_nums ]
 df2.set_axis(index, axis=1, inplace=True)
 df2.head(20)
 
 wavelengths = np.linspace(340, 850, 289)
 
-time = np.array(df2.loc[:,'A']).reshape(-1,1)
-left_temp = np.array(df2.loc[:,'B']).reshape(-1,1)
-right_temp = np.array(df2.loc[:,'C']).reshape(-1,1)
+time = np.array(df2.loc[:,'VI']).reshape(-1,1)
+left_temp = np.array(df2.loc[:,'VK']).reshape(-1,1)
+right_temp = np.array(df2.loc[:,'VL']).reshape(-1,1)
+x_accel = np.array(df2.loc[:,'VM']).reshape(-1,1)
+y_accel = np.array(df2.loc[:,'VN']).reshape(-1,1)
+z_accel = np.array(df2.loc[:,'VO']).reshape(-1,1)
 
-spec_data = np.array(df2.loc[:, 'D':])
+spec_data_1 = np.array(df2.loc[:, :'KC'])
+spec_data_2 = np.array(df2.loc[:, 'KD':'VF'])
+wavelengths = np.linspace(340, 850, 289)
 
 fig, (spec_plot, temp_plot) = plt.subplots(1,2)
 
-spec_plot.plot(wavelengths, spec_data[0,:]) 
+fig, axd = plt.subplot_mosaic([['upper','upper'],['lower left','lower right']])
+spec_plot = axd['upper']
+temp_plot = axd['lower left']
+accel_plot = axd['lower right']
+
+spec_plot.plot(wavelengths, spec_data_1[0,:], wavelengths, spec_data_2[0,:]) 
 spec_plot.set_title('Spectrometer Data')
-spec_plot.set_xlabel('Wavelengths [nm]')
-spec_plot.set_ylabel('Intensity')
 spec_plot.axis([340, 850, 0, 1050])
 
 temp_plot.plot(time[0], left_temp[0], time[0], right_temp[0])
+temp_plot.axis([None, None, 20, 30])
 temp_plot.set_title('Temperature Readings')
-temp_plot.set_xlabel('Time [s]')
-temp_plot.set_ylabel('Temperature [ºC]')
-temp_plot.legend(['Window Sensor', 'Spectrometer Sensor'])
-temp_plot.axis([None, None, 0, 400])
+
+accel_plot.plot(time[0], x_accel[0], \
+                time[0], y_accel[0], \
+                time[0], z_accel[0] )
+accel_plot.set_title('Accelerometer Readings')
+accel_plot.legend(['X acceleration', 'Y acceleration', 'Z acceleration'])
+accel_plot.axis([None, None, -10, 10])
 
 plt.tight_layout()
 
-
 def animate(i):
-    spec_plot.lines[0].set_ydata(spec_data[i+1,:])
+    spec_plot.lines[0].set_ydata(spec_data_1[i+1,:])
+    spec_plot.lines[1].set_ydata(spec_data_2[i+1,:])
     spec_plot.relim() 
     spec_plot.autoscale_view()
     
@@ -76,9 +88,20 @@ def animate(i):
     temp_plot.lines[1].set_xdata(time[0:i+1])
     temp_plot.relim() 
     temp_plot.autoscale_view()
+    
+    accel_plot.lines[0].set_ydata(x_accel[0:i+1])
+    accel_plot.lines[0].set_xdata(time[0:i+1])
+    accel_plot.lines[1].set_ydata(y_accel[0:i+1])
+    accel_plot.lines[1].set_xdata(time[0:i+1])
+    accel_plot.lines[2].set_ydata(z_accel[0:i+1])
+    accel_plot.lines[2].set_xdata(time[0:i+1])
+    accel_plot.relim() 
+    accel_plot.autoscale_view()
+
+fps = int(sys.argv[2])
 
 ani = animation.FuncAnimation(fig, animate, frames=num_frames, interval=40)
 #plt.show()
 
-ani.save('spec_plot_{}.mp4'.format(excel_title), fps=40, dpi=200)
+ani.save('elec_plot_{}_fps.mp4'.format(fps), fps=fps, dpi=200)
     
