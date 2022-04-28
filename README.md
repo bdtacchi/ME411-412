@@ -1,7 +1,3 @@
-# SpectrometerStuff
+# ME411-412 Arduino and Python programs
 
-So there is a file called ```plotter_no_led.ino``` in the ArduinoCode folder. This has the main code for the spectrometer. 
-
-And there is a ```plotter_no_led.py``` file in the PythonHelpers folder. This will plot the data when you have the Arduino connected running the code. Might need to change the name of the port and some of other little stuff but you got it.
-
-I'll also add the other arduino and python scripts but those are the main ones.
+This repo contains all the code used during the ME411 and ME412 semesters. The programs were used to read the data collected by a C12880ma spectrometer connected to an Arduino, along with other functionalities added in different versions of the main program. The python files were used to plot the data and save it to a .csv file.
